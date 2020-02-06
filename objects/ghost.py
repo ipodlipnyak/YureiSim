@@ -65,7 +65,8 @@ class virus(ghost,object):
         super(virus,self).__init__(surface,observer,x,y,w,h)
         self.dy = 1
         self.rect.x = random.randrange(0,self.surf_rect.w/self.rect.w)
-        self.rect.y = random.randrange(0,(self.surf_rect.w/self.rect.w)-(self.surf_rect.w/self.rect.w)/7)
+        #self.rect.y = random.randrange(0,(self.surf_rect.w/self.rect.w)-(self.surf_rect.w/self.rect.w)/7)
+        self.rect.y = random.randrange(0,self.surf_rect.h/self.rect.h)
     def on_move(self):
         self.on_fall()
         self.on_do()
