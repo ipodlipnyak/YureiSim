@@ -35,8 +35,9 @@ class App:
         while gc <= self.gc:
             gx = random.randrange(0,self.weigth/self.ts)
             gy = random.randrange(0,self.height/self.ts)
-            #ginie = ghost.virus(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
-            ginie = ghost.yurei(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
+            ginie = ghost.virus(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
+            #ginie = ghost.yurei(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
+            #ginie = ghost.rojinbi(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
             self.lamp.add(ginie)
             gc += 1
 

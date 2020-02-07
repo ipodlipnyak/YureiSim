@@ -77,7 +77,8 @@ class virus(ghost,object):
                 self.rect.y += self.dy
             else:
                 self.rect.x = random.randrange(0,self.surf_rect.w/self.rect.w)
-                self.rect.y = random.randrange(0,(self.surf_rect.h/self.rect.h)-(self.surf_rect.h/self.rect.h)/7)
+                #self.rect.y = random.randrange(0,(self.surf_rect.h/self.rect.h)-(self.surf_rect.h/self.rect.h)/7)
+                self.rect.y = random.randrange(0,self.surf_rect.h/self.rect.h)
                 self.R = random.randrange(0,255)
                 self.G = random.randrange(0,255)
                 self.B = random.randrange(0,255)
