@@ -5,7 +5,7 @@
 #the observers must rely on repeatedly polling the observed to note the changes. 
 #This is a "pull" versus a "push" type of pattern. Quite appropriate for certain applications. 
 
-from .var_depo import grid
+from .var_depo import Depo
 import threading, multiprocessing 
 from threading import Thread
 from multiprocessing import Process
@@ -22,9 +22,9 @@ class PushModel(object):
             self._observers.append(appe)
 
     def get_tile(self,x,y,var_name):
-        return getattr(grid.g[x][y],str(var_name))
+        return getattr(Depo.gridSingleton.g[x][y],str(var_name))
     def set_tile(self,x,y,var_name,new_value):
-        setattr(grid.g[x][y],var_name,new_value)
+        setattr(Depo.gridSingleton.g[x][y],var_name,new_value)
         name_str = str(var_name)
         for callback in self._observers:
             if x == callback[0] and y == callback[1] and var_name == callback[2]:

@@ -4,7 +4,7 @@ from pygame.locals import *
 from pygame.sprite import Group, GroupSingle
 from objects import observer, grid, var_depo, ghost
 
-from objects.var_depo import grid as gridSingleton
+from objects.var_depo import Depo
  
 class App:
     def __init__(self):
@@ -29,7 +29,7 @@ class App:
         self.clock = pygame.time.Clock()
         self.herr = observer.PushModel()
         #var_depo.grid = grid.Grid(surface=self.surf,font=self.font,notifier=self.herr,tile_value='grass',neighbor_rad=self.nerad,tile_size=self.ts,nt=self.net,lb=self.leb,rb=self.rib)
-        gridSingleton = grid.Grid(surface=self.surf,font=self.font,notifier=self.herr,tile_value='grass',neighbor_rad=self.nerad,tile_size=self.ts,nt=self.net,lb=self.leb,rb=self.rib)
+        Depo.gridSingleton = grid.Grid(surface=self.surf,font=self.font,notifier=self.herr,tile_value='grass',neighbor_rad=self.nerad,tile_size=self.ts,nt=self.net,lb=self.leb,rb=self.rib)
         self.lamp = pygame.sprite.Group()
         gc = 1
         while gc <= self.gc:
