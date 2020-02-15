@@ -1,9 +1,9 @@
 import pygame
-import math, random, scipy, numpy, Queue, threading, logging, os
+import math, random, scipy, numpy, threading, logging, os
 from numpy import linalg
 from objects import map
 from decimal import *
-from Queue import Queue
+#from Queue import Queue
 from threading import Thread
 
 module_logger = logging.getLogger('App.Grid')
@@ -20,10 +20,10 @@ class Grid(object):
         self.nt = nt
         self.lb = lb
         self.rb = rb
-        self.q = Queue()
+        #self.q = Queue()
 
-        self.w = self.s_rect.w/tile_size #grid width
-        self.h = self.s_rect.h/tile_size #grid height
+        self.w = int(self.s_rect.w/tile_size) #grid width
+        self.h = int(self.s_rect.h/tile_size) #grid height
         self.v = tile_value #tile value: [1] - color, [2] - type
         self.g = [] #grid
         self.tiles = pygame.sprite.Group()
@@ -131,7 +131,7 @@ class Dummy_Tile(pygame.sprite.Sprite,object):
         self.var_string = ''.join(self.var_tuple)
         self.notifier.bind_on(x,y,'color',callback=self.callback)
         self.notifier.bind_on(x,y,'symbol',callback=self.callback)
-        self.q = Queue()
+        #self.q = Queue()
 #        print 'Create callback',self.var_string
         
         self.color = 0,15,0

@@ -26,13 +26,18 @@ class App:
         self.font = pygame.font.SysFont('sawasdee', self.ts)
         self.clock = pygame.time.Clock()
         self.herr = observer.PushModel()
-        var_depo.grid = grid.Grid(surface=self.surf,font=self.font,notifier=self.herr,tile_value='grass',neighbor_rad=self.nerad,tile_size=self.ts,nt=self.net,lb=self.leb,rb=self.rib)
+        pomoi = var_depo.Dump()
+        pomoi.grid = grid.Grid(surface=self.surf,font=self.font,notifier=self.herr,tile_value='grass',neighbor_rad=self.nerad,tile_size=self.ts,nt=self.net,lb=self.leb,rb=self.rib)
         self.lamp = pygame.sprite.Group()
         gc = 1
         while gc <= self.gc:
             gx = random.randrange(0,self.weigth/self.ts)
             gy = random.randrange(0,self.height/self.ts)
-            ginie = ghost.virus(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
+            
+            '''
+            TODO: switch gost type
+            '''
+            ginie = ghost.yurei(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts) #ghost
             self.lamp.add(ginie)
             gc += 1
 
