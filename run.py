@@ -2,7 +2,7 @@ import sys, random, math, pygame, logging, objects
 from sys import exit
 from pygame.locals import *
 from pygame.sprite import Group, GroupSingle
-from objects import observer, grid, var_depo, ghost
+from objects import observer, grid, ghost
 
 from objects.var_depo import Depo
  
@@ -11,13 +11,13 @@ class App:
         self._running = True
         self._display_surf = None
         self.size = self.weigth, self.height = 1200,750#600, 375 #1024, 368
-        self.ts = 30 #tile size
-        self.nerad = 2,2 #neighborhood radius
+        self.ts = 15 #tile size
+        self.nerad = 0,0 #neighborhood radius
         self.net = 6 #neighborhood type from 1 to 6
         self.leb = 1 #left bias for color mix. Weight for old color 
         self.rib = 2 #right bias for color mix. Weight for new color
         self.td = 10 #time delay
-        self.gc = 2 #count for genies
+        self.gc = 4 #count for genies
 
     def on_init(self):
 #        pygame.init()
@@ -35,7 +35,8 @@ class App:
         while gc <= self.gc:
             gx = random.randrange(0,self.weigth/self.ts)
             gy = random.randrange(0,self.height/self.ts)
-            ginie = ghost.virus(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
+            ginie = ghost.bakemono(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
+            #ginie = ghost.virus(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
             #ginie = ghost.yurei(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
             #ginie = ghost.rojinbi(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
             self.lamp.add(ginie)

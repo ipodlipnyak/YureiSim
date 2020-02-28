@@ -1,4 +1,5 @@
 import pygame, random
+from numpy.polynomial.polynomial import polyval
 
 class ghost(pygame.sprite.Sprite,object):
     def __init__(self,surface,observer,x=0,y=0,w=15,h=15):
@@ -11,6 +12,11 @@ class ghost(pygame.sprite.Sprite,object):
         self.G = random.randrange(0,255)
         self.B = random.randrange(0,255)
         self.symbol = 'Y'
+        
+        self.grid = {
+            'height': self.surf_rect.h/self.rect.h,
+            'width': self.surf_rect.w/self.rect.w
+            }
     def update(self):
         self.on_move()
     def on_move(self):
@@ -21,6 +27,24 @@ class ghost(pygame.sprite.Sprite,object):
         self.R = random.randrange(0,255)
         self.G = random.randrange(0,255)
         self.B = random.randrange(0,255)
+
+class bakemono(ghost):
+    def __init__(self,surface,observer,x=0,y=0,w=15,h=15):
+        super(bakemono,self).__init__(surface,observer,x,y,w,h)
+        self.symbol = 'B'
+    def on_move(self):
+        if self.rect.y + 1 < self.grid['height']:
+            self.rect.y += 1
+        else:
+            self.rect.y = 0
+        
+        dxx = polyval(self.rect.y, [-self.rect.x,-0.5,0.06,-0.0008])
+        if dxx < self.grid['width']:
+            self.rect.x = dxx
+        else:
+            self.rect.x = 0
+            
+        self.obs.set_tile(self.rect.x,self.rect.y,'color',(self.R,self.G,self.B))
 
 class yurei(ghost,object):
     def __init__(self,surface,observer,x=0,y=0,w=15,h=15):
@@ -55,7 +79,7 @@ class yurei(ghost,object):
             #self.dx *= -1
             self.random_choice()
             self.switch_color()
-    def change_tile(self):
+    def change_tile(self,surface,observer,x=0,y=0,w=15,h=15):
         self.obs.set_tile(self.rect.x,self.rect.y,'color',(self.R,self.G,self.B))
         self.obs.set_tile(self.rect.x,self.rect.y,'symbol',self.symbol)
         self.obs.set_tile(self.dxx,self.dyy,'symbol','O')
