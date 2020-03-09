@@ -13,7 +13,7 @@ class App:
         self.size = self.weigth, self.height = 1200,750#600, 375 #1024, 368
         self.ts = 15 #tile size
         self.nerad = 0,0 #neighborhood radius
-        self.net = 6 #neighborhood type from 1 to 6
+        self.net = 4 #neighborhood type from 1 to 6
         self.leb = 1 #left bias for color mix. Weight for old color 
         self.rib = 2 #right bias for color mix. Weight for new color
         self.td = 10 #time delay
@@ -35,12 +35,17 @@ class App:
         while gc <= self.gc:
             gx = random.randrange(0,self.weigth/self.ts)
             gy = random.randrange(0,self.height/self.ts)
-            ginie = ghost.bakemono(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
+            #ginie = ghost.bakemono(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
             #ginie = ghost.virus(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
             #ginie = ghost.yurei(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
             #ginie = ghost.rojinbi(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
+            ginie = ghost.Mononoke(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
             self.lamp.add(ginie)
             gc += 1
+            
+        #self.lamp.add(ghost.bakemono(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts))
+        #self.lamp.add(ghost.bakemono(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts))
+        #self.lamp.add(ghost.Mononoke(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts))
 
         self._running = True
 
