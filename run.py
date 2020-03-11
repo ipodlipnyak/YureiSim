@@ -17,7 +17,7 @@ class App:
         self.leb = 1 #left bias for color mix. Weight for old color 
         self.rib = 2 #right bias for color mix. Weight for new color
         self.td = 10 #time delay
-        self.gc = 4 #count for genies
+        self.gc = 1 #count for genies
 
     def on_init(self):
 #        pygame.init()
@@ -39,7 +39,8 @@ class App:
             #ginie = ghost.virus(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
             #ginie = ghost.yurei(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
             #ginie = ghost.rojinbi(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
-            ginie = ghost.Mononoke(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
+            #ginie = ghost.Mononoke(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
+            ginie = ghost.SmartGirl(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
             self.lamp.add(ginie)
             gc += 1
             

@@ -7,6 +7,7 @@ import pygame, random
 from numpy.polynomial.polynomial import polyval
 
 import numpy as np
+import math
 import tensorflow as tf
 from math import floor
 mnist = tf.keras.datasets.mnist
@@ -98,7 +99,7 @@ class yurei(ghost,object):
             #self.dx *= -1
             self.random_choice()
             self.switch_color()
-    def change_tile(self,surface,observer,x=0,y=0,w=15,h=15):
+    def change_tile(self):
         self.obs.set_tile(self.rect.x,self.rect.y,'color',(self.R,self.G,self.B))
         self.obs.set_tile(self.rect.x,self.rect.y,'symbol',self.symbol)
         self.obs.set_tile(self.dxx,self.dyy,'symbol','O')
@@ -175,12 +176,12 @@ class Mononoke(ghost):
         super(Mononoke,self).__init__(surface,observer,x,y,w,h)
         self.model = tf.keras.models.Sequential([
             tf.keras.layers.Dense(2),
-            tf.keras.layers.LayerNormalization(),
+            #tf.keras.layers.LayerNormalization(),
             #tf.keras.layers.LayerNormalization(axis=1 , center=True , scale=True),
             #tf.keras.layers.Dense(8),
-            #tf.keras.layers.Dense(64, activation='relu'),
+            tf.keras.layers.Dense(64, activation='relu'),
             #tf.keras.layers.Dense(64),
-            tf.keras.layers.Dense(120),
+            #tf.keras.layers.Dense(120),
             #tf.keras.layers.Dropout(0.2),
             #tf.keras.layers.Dense(64),
             #tf.keras.layers.Dense(8),
@@ -200,19 +201,31 @@ class Mononoke(ghost):
         
         self.data_sets = {
             'train_input': {
+                'square': [[0.25,0.25],[0.25,0.5],[0.5,0.5],[0.5,0.25]],
                 'bounce': [[0,0],[0,1],[1,0],[1,1]],
+                'bs': [[0.25,0.25],[0.25,0.5],[0.5,0.5],[0.5,0.25],[0,0],[0,1],[1,0],[1,1]],
+                'bs1': [[0.25,0.25],[0.25,0.5],[0.5,0.5],[0.5,0.25],[0,0],[0,1],[1,0],[1,1]],
                 'random': np.random.random((1000, 2)),
                 },
             'train_output': {
+                'square': [[1,0],[0,1],[-1,0],[0,-1]],
                 'bounce': [[1,1],[1,-1],[-1,1],[-1,-1]],
+                'bs': [[1,0],[0,1],[-1,0],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]],
+                'bs1': [[1,0],[0,1],[-1,0],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]],
                 'random': np.random.random((1000, 2)),
                 },
             'validate_input': {
+                'square': [[0.25,0.25],[0.25,0.5],[0.5,0.5],[0.5,0.25]],
                 'bounce': [[0.1,0],[0.1,1],[1,0.1],[1,1]],
+                'bs': [[0.25,0.25],[0.25,0.5],[0.5,0.5],[0.5,0.25],[0,0],[0,1],[1,0],[1,1]],
+                'bs1': [[0.25,0.25],[0.25,0.5],[0.5,0.5],[0.5,0.25],[0,0],[0,1],[1,0],[1,1]],
                 'random': np.random.random((1000, 2)),
                 },
             'validate_output': {
+                'square': [[1,0],[0,1],[-1,0],[0,-1]],
                 'bounce': [[0.1,1],[0.1,-1],[-1,0.1],[-1,-1]],
+                'bs': [[1,0],[0,1],[-1,0],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]],
+                'bs1': [[1,0],[0,1],[-1,0],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]],
                 'random': np.random.random((1000, 2)),
                 }            
             }
@@ -255,12 +268,20 @@ class Mononoke(ghost):
     def on_move(self):
         x = self.rect.x / self.grid['width']
         y = self.rect.y / self.grid['height']
-        dx, dy = np.floor(np.multiply(self.predict([x, y]),10))
+        #dx, dy = np.floor(np.multiply(self.predict([x, y]),10))
         #dx, dy = np.floor(self.predict([x, y]))
-        #xx, yy = self.predict([x, y])
+        xx, yy = self.predict([x, y])
         
-        #dx = 1 if xx > 0 else -1 if xx < 0 else 0
-        #dy = 1 if yy > 0 else -1 if yy < 0 else 0
+        dx = 1 if xx > 0 else -1 if xx < 0 else 0
+        dy = 1 if yy > 0 else -1 if yy < 0 else 0
+        
+        if abs(dy) > abs(dx):
+            dx = 0
+        elif abs(dx) > abs(dy):
+            dy = 0
+        
+        #dx = 0 if abs(dy) > abs(dx) else dx
+        #dy = 0 if abs(dy) > abs(dx)
         
         if self.rect.y + dy < self.grid['height']:
             self.rect.y += dy
@@ -268,7 +289,7 @@ class Mononoke(ghost):
             #pass
             #self.rect.y = 0
             #self.rect.y = floor(self.grid['height'] / 2)
-            self.rect.y = random.randrange(0,self.surf_rect.h/self.rect.h)
+            self.rect.y = random.randrange(2,self.grid['height'] - 2)
                 
         #dxx = polyval(self.rect.y, [-self.rect.x,0.5,0.06,-0.0008])
         if self.rect.x + dx < self.grid['width']:
@@ -276,12 +297,12 @@ class Mononoke(ghost):
         else:
             #pass
             #self.rect.x = floor(self.grid['width'] / 2)
-            self.rect.x = random.randrange(0,self.surf_rect.w/self.rect.w)
+            self.rect.x = random.randrange(2,self.grid['width'] - 2)
             
         #self.obs.set_tile(self.rect.x,self.rect.y,'color',(self.R,self.G,self.B))
-        self.change_tile()
+        self.changeTile()
         
-    def change_tile(self):
+    def changeTile(self):
         self.obs.set_tile(self.rect.x,self.rect.y,'color',(self.R,self.G,self.B))
         if self.obs.get_tile(self.rect.x,self.rect.y,'symbol') == 'O':
             self.obs.set_tile(self.rect.x,self.rect.y,'symbol','X')
@@ -338,8 +359,9 @@ class Mononoke(ghost):
         logdir="logs/fit/" + datetime.now().strftime("%Y%m%d-%H%M%S")
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
         
-        #ds_type = 'bounce_gen'
-        ds_type = 'bounce'
+        ds_type = 'bounce_gen'
+        #ds_type = 'bounce'
+        #ds_type = 'bs'
         #ds_type = 'random'
         
         self.model.fit(
@@ -375,3 +397,259 @@ class Mononoke(ghost):
         df_x = (x - self.df_mean[0]) / (self.df_max.item(0) - self.df_min.item(0))
         df_y = (y - self.df_mean[1]) / (self.df_max.item(1) - self.df_min.item(1))
         return [round(df_x, 3), round(df_y,3)]
+    
+class SmartGirl(ghost):
+    '''
+    @param model: TensorFlow model
+    
+    @param train_input_data: training input data set
+    @param train_output_data: trainung output data set
+    
+    @param validate_input_data: validation input data set
+    @param validate_output_data: validation output data set    
+    '''
+    
+    def __init__(self,surface,observer,x=0,y=0,w=15,h=15):
+        super(SmartGirl,self).__init__(surface,observer,x,y,w,h)
+        
+        self.old_vector_x = 0
+        self.old_vector_y = 0
+        
+        self.model = tf.keras.models.Sequential([
+            tf.keras.layers.Dense(4),
+            #tf.keras.layers.LayerNormalization(),
+            #tf.keras.layers.LayerNormalization(axis=1 , center=True , scale=True),
+            #tf.keras.layers.Dense(8),
+            #tf.keras.layers.Dense(64, activation='relu'),
+            #tf.keras.layers.Dense(64),
+            #tf.keras.layers.Dense(120),
+            #tf.keras.layers.Dropout(0.2),
+            tf.keras.layers.Dense(64),
+            #tf.keras.layers.Dense(8),
+            #tf.keras.layers.Dense(3),
+            #tf.keras.layers.LayerNormalization(),
+            tf.keras.layers.Dense(2)
+            #tf.keras.layers.Dense(2, activation='softmax')
+        ])
+        
+        '''
+        [
+            [now_x,now_y,old_vector_x,old_vector_y],
+            ...
+            [nxx,nyy,ovx,ovy]
+        ]
+        '''
+        
+        self.data_sets = {
+            'train_input': {
+                'bounce': [[0,0,0,0],[0,1,1,1],[1,0,1,-1],[1,1,-1,1]],
+                'random': np.random.random((1000, 4)),
+                'bs': [[0.25,0.25],[0.25,0.5],[0.5,0.5],[0.5,0.25],[0,0],[0,1],[1,0],[1,1]],
+                'empty': [[0,0]],
+                },
+            'train_output': {
+                'bounce': [[1,1],[1,-1],[-1,1],[-1,-1]],
+                'random': np.random.random((1000, 2)),
+                'bs': [[1,0],[0,1],[-1,0],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]],
+                'empty': [[0,0]],
+                },
+            'validate_input': {
+                'bounce': [[0.1,0,0,0],[0.1,1,0.1,1],[1,0.1,0.1,-1],[1,1,-1,-1]],
+                'random': np.random.random((1000, 4)),
+                'bs': [[0.25,0.25],[0.25,0.5],[0.5,0.5],[0.5,0.25],[0,0],[0,1],[1,0],[1,1]],
+                'empty': [[0,0]],
+                },
+            'validate_output': {
+                'bounce': [[0.1,1],[0.1,-1],[-1,0.1],[-1,-1]],
+                'random': np.random.random((1000, 2)),
+                'bs': [[1,0],[0,1],[-1,0],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]],
+                'empty': [[0,0]],
+                }
+            }
+        
+        self.trainDSGen()
+        
+        #self.train_input_data = [[0,0],[0,1],[1,0],[1,1]]
+        #self.train_output_data = [[1,1],[1,-1],[-1,1],[-1,-1]]
+    
+        #self.validate_input_data = [[0.1,0],[0.1,1],[1,0.1],[1,1]]
+        #self.validate_output_data = [[0.1,1],[0.1,-1],[-1,0.1],[-1,-1]]
+        
+        #self.train_input_data = np.random.random((1000, 2))
+        #self.train_output_data = np.random.random((1000, 2))
+        
+        #self.validate_input_data = np.random.random((100, 2))
+        #self.validate_output_data = np.random.random((100, 2))
+        
+        #self.model.compile(optimizer='adam',
+        #    loss='sparse_categorical_crossentropy',
+        #    metrics=['accuracy'])
+        
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(0.01),
+              loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
+              metrics=['accuracy'])
+
+        self.train()
+        
+        #data = np.random.random((1000, 2))
+        #labels = np.random.random((1000, 2))
+        
+        #val_data = np.random.random((100, 2))
+        #val_labels = np.random.random((100, 2))
+
+        
+        #self.model.fit(data, labels, epochs=10, validation_data=(val_data, val_labels))
+        #self.model.fit(data, labels, epochs=10)
+        #self.model.fit(data, labels, epochs=10)
+
+    def on_move(self):
+        x = self.rect.x / self.grid['width']
+        y = self.rect.y / self.grid['height']
+        #dx, dy = np.floor(np.multiply(self.predict([x, y]),10))
+        #dx, dy = np.floor(self.predict([x, y]))
+        xx, yy = self.predict([x, y])
+        
+        dx = 1 if xx > 0 else -1 if xx < 0 else 0
+        dy = 1 if yy > 0 else -1 if yy < 0 else 0
+        
+        if abs(dy) > abs(dx):
+            dx = 0
+        elif abs(dx) > abs(dy):
+            dy = 0
+        
+        #dx = 0 if abs(dy) > abs(dx) else dx
+        #dy = 0 if abs(dy) > abs(dx)
+        
+        if self.rect.y + dy < self.grid['height']:
+            self.rect.y += dy
+        else:
+            #pass
+            #self.rect.y = 0
+            #self.rect.y = floor(self.grid['height'] / 2)
+            self.rect.y = random.randrange(2,self.grid['height'] - 2)
+                
+        #dxx = polyval(self.rect.y, [-self.rect.x,0.5,0.06,-0.0008])
+        if self.rect.x + dx < self.grid['width']:
+            self.rect.x += dx
+        else:
+            #pass
+            #self.rect.x = floor(self.grid['width'] / 2)
+            self.rect.x = random.randrange(2,self.grid['width'] - 2)
+            
+        #self.obs.set_tile(self.rect.x,self.rect.y,'color',(self.R,self.G,self.B))
+        self.changeTile()
+        
+    def changeTile(self):
+        self.obs.set_tile(self.rect.x,self.rect.y,'color',(self.R,self.G,self.B))
+        if self.obs.get_tile(self.rect.x,self.rect.y,'symbol') == 'O':
+            self.obs.set_tile(self.rect.x,self.rect.y,'symbol','X')
+        elif self.obs.get_tile(self.rect.x,self.rect.y,'symbol') == 'X':
+            self.obs.set_tile(self.rect.x,self.rect.y,'symbol','G')
+        else:
+            self.obs.set_tile(self.rect.x,self.rect.y,'symbol','O')
+    
+    def trainDSGen(self):
+        i = 0
+        
+        data_set = []
+        
+        while i < 1000:
+            val = round(np.random.uniform(),3)
+            #delta = 1 if val < 0.2 else -1 if val > 0.8 else round(np.random.uniform(),3)
+            #delta = 100 if val < 0.2 else -100 if val > 0.8 else random.randrange(-1,1)
+            delta = 100 if val < 0.2 else -100 if val > 0.8 else math.log(val) * 100
+            #delta = 1 if val < 0.2 else -1 if val > 0.8 else -100
+            #delta = 0
+            
+            data_set.insert(i, {
+                    'input': val,
+                    'output': delta
+                })
+
+            i += 1
+        
+        self.data_sets['train_input']['bounce_gen'] = []
+        self.data_sets['train_output']['bounce_gen'] = []
+        self.data_sets['validate_input']['bounce_gen'] = []
+        self.data_sets['validate_output']['bounce_gen'] = []
+        
+        for i, x in enumerate(data_set):
+            self.data_sets['train_input']['bounce_gen'].append([x['input']])
+            self.data_sets['train_output']['bounce_gen'].append([x['output']])
+        
+        np.random.shuffle(data_set)
+        
+        for i, y in enumerate(data_set):
+            self.data_sets['train_input']['bounce_gen'][i].append(y['input'])
+            self.data_sets['train_output']['bounce_gen'][i].append(y['output'])
+            
+        np.random.shuffle(data_set)
+        
+        for i, x in enumerate(data_set):
+            self.data_sets['validate_input']['bounce_gen'].append([x['input']])
+            self.data_sets['validate_output']['bounce_gen'].append([x['output']])
+        
+        np.random.shuffle(data_set)
+        
+        for i, y in enumerate(data_set):
+            self.data_sets['validate_input']['bounce_gen'][i].append(y['input'])
+            self.data_sets['validate_output']['bounce_gen'][i].append(y['output'])
+
+        
+    def train(self):
+        # Define the Keras TensorBoard callback.
+        logdir="logs/fit/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
+        
+        ds_type = 'bounce'
+        
+        self.model.fit(
+            self.data_sets['train_input'][ds_type],
+            self.data_sets['train_output'][ds_type], 
+            epochs=19,
+            validation_data=(
+                self.data_sets['validate_input'][ds_type],
+                self.data_sets['validate_output'][ds_type], 
+                ),
+            callbacks=[tensorboard_callback])
+        
+        xy_step = 1
+        xy_samples = np.arange(-1, 1 + xy_step, xy_step)
+        xy = [[x] + [y] for y in xy_samples for x in xy_samples]
+        
+        #v_step = 1
+        #vector_samples = np.arange(-1, 1 + v_step, v_step)
+        vector_samples = [1,-1]
+        vector = [[x] + [y] for y in vector_samples for x in vector_samples]
+        
+        test_input = [d + v for v in vector for d in xy]
+        
+        test_output = np.array([])
+        for test in test_input:
+            pred = self.model.predict(np.array([test]))
+            test_output = pred if test_output.size == 0 else np.append(test_output, pred, 0)
+        
+        self.df_max = [test_output[:,0].max(),test_output[:,1].max()]
+        self.df_min = [test_output[:,0].min(),test_output[:,1].min()]
+        
+        self.df_mean = [
+            test_output[:,0].mean(),
+            test_output[:,1].mean(),
+            ]
+        
+    def getModel(self):
+        return self.model
+    
+    def predict(self, data):
+        '''
+        df_norm = (df - df.mean()) / (df.max() - df.min())
+        '''
+        prediction = self.model.predict([data + [self.old_vector_x] + [self.old_vector_y]])
+        x = prediction.item(0)
+        y = prediction.item(1)
+        
+        # Normalisation
+        df_x = (x - self.df_mean[0]) / (self.df_max[0] - self.df_min[0])
+        df_y = (y - self.df_mean[1]) / (self.df_max[1] - self.df_min[1])
+        return [round(df_x, 3), round(df_y, 3)]
+        #return [x, y]
