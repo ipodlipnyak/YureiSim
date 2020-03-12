@@ -424,10 +424,12 @@ class SmartGirl(ghost):
             #tf.keras.layers.Dense(8),
             #tf.keras.layers.Dense(64, activation='relu'),
             #tf.keras.layers.Dense(64),
-            #tf.keras.layers.Dense(120),
+            tf.keras.layers.Dense(120),
             #tf.keras.layers.Dropout(0.2),
             #tf.keras.layers.Dense(64),
+            tf.keras.layers.Dense(64),
             tf.keras.layers.Dense(8),
+            tf.keras.layers.Dense(64),
             #tf.keras.layers.Dense(3),
             #tf.keras.layers.LayerNormalization(),
             tf.keras.layers.Dense(2)
@@ -616,7 +618,7 @@ class SmartGirl(ghost):
         logdir="logs/fit/" + datetime.now().strftime("%Y%m%d-%H%M%S")
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
         
-        ds_type = 'bounce'
+        ds_type = 'random'
         
         self.model.fit(
             self.data_sets['train_input'][ds_type],
