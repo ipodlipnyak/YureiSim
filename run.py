@@ -11,9 +11,9 @@ class App:
         self._running = True
         self._display_surf = None
         self.size = self.weigth, self.height = 1200,750#600, 375 #1024, 368
-        self.ts = 15 #tile size
-        self.nerad = 0,0 #neighborhood radius
-        self.net = 4 #neighborhood type from 1 to 6
+        self.ts = 30 #tile size
+        self.nerad = 1,1 #neighborhood radius
+        self.net = 3 #neighborhood type from 1 to 6
         self.leb = 1 #left bias for color mix. Weight for old color 
         self.rib = 2 #right bias for color mix. Weight for new color
         self.td = 10 #time delay

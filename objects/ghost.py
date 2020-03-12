@@ -409,6 +409,8 @@ class SmartGirl(ghost):
     @param validate_output_data: validation output data set    
     '''
     
+    train_epochs = 5 #TensorFlow model train epochs param
+    
     def __init__(self,surface,observer,x=0,y=0,w=15,h=15):
         super(SmartGirl,self).__init__(surface,observer,x,y,w,h)
         
@@ -424,8 +426,8 @@ class SmartGirl(ghost):
             #tf.keras.layers.Dense(64),
             #tf.keras.layers.Dense(120),
             #tf.keras.layers.Dropout(0.2),
-            tf.keras.layers.Dense(64),
-            #tf.keras.layers.Dense(8),
+            #tf.keras.layers.Dense(64),
+            tf.keras.layers.Dense(8),
             #tf.keras.layers.Dense(3),
             #tf.keras.layers.LayerNormalization(),
             tf.keras.layers.Dense(2)
@@ -501,40 +503,53 @@ class SmartGirl(ghost):
         #self.model.fit(data, labels, epochs=10, validation_data=(val_data, val_labels))
         #self.model.fit(data, labels, epochs=10)
         #self.model.fit(data, labels, epochs=10)
+    def respawn(self):
+        offset = 5
+        self.rect.y = random.randrange(offset, self.grid['height'] - offset)
+        self.rect.x = random.randrange(offset, self.grid['width'] - offset)
 
     def on_move(self):
         x = self.rect.x / self.grid['width']
         y = self.rect.y / self.grid['height']
         #dx, dy = np.floor(np.multiply(self.predict([x, y]),10))
+        #dx, dy = np.multiply(self.predict([x, y]),100)
         #dx, dy = np.floor(self.predict([x, y]))
         xx, yy = self.predict([x, y])
+        #dx, dy = self.predict([x, y])
+        
+        #if abs(xx) > abs(yy):
+        #    xx = 0
+        #elif abs(yy) > abs(xx):
+        #    yy = 0
         
         dx = 1 if xx > 0 else -1 if xx < 0 else 0
         dy = 1 if yy > 0 else -1 if yy < 0 else 0
         
-        if abs(dy) > abs(dx):
-            dx = 0
-        elif abs(dx) > abs(dy):
-            dy = 0
+        #if abs(dy) > abs(dx):
+        #    dx = 0
+        #elif abs(dx) > abs(dy):
+        #    dy = 0
         
         #dx = 0 if abs(dy) > abs(dx) else dx
         #dy = 0 if abs(dy) > abs(dx)
         
-        if self.rect.y + dy < self.grid['height']:
+        if 0 < self.rect.y + dy < self.grid['height']:
             self.rect.y += dy
         else:
+            self.respawn()
             #pass
             #self.rect.y = 0
             #self.rect.y = floor(self.grid['height'] / 2)
-            self.rect.y = random.randrange(2,self.grid['height'] - 2)
+            #self.rect.y = random.randrange(5,self.grid['height'] - 5)
                 
         #dxx = polyval(self.rect.y, [-self.rect.x,0.5,0.06,-0.0008])
-        if self.rect.x + dx < self.grid['width']:
+        if 0 < self.rect.x + dx < self.grid['width']:
             self.rect.x += dx
         else:
+            self.respawn()
             #pass
             #self.rect.x = floor(self.grid['width'] / 2)
-            self.rect.x = random.randrange(2,self.grid['width'] - 2)
+            #self.rect.x = random.randrange(5,self.grid['width'] - 5)
             
         #self.obs.set_tile(self.rect.x,self.rect.y,'color',(self.R,self.G,self.B))
         self.changeTile()
@@ -606,15 +621,15 @@ class SmartGirl(ghost):
         self.model.fit(
             self.data_sets['train_input'][ds_type],
             self.data_sets['train_output'][ds_type], 
-            epochs=19,
+            epochs=self.train_epochs,
             validation_data=(
                 self.data_sets['validate_input'][ds_type],
                 self.data_sets['validate_output'][ds_type], 
                 ),
             callbacks=[tensorboard_callback])
         
-        xy_step = 1
-        xy_samples = np.arange(-1, 1 + xy_step, xy_step)
+        xy_step = 0.5
+        xy_samples = np.arange(0, 1 + xy_step, xy_step)
         xy = [[x] + [y] for y in xy_samples for x in xy_samples]
         
         #v_step = 1
@@ -624,17 +639,20 @@ class SmartGirl(ghost):
         
         test_input = [d + v for v in vector for d in xy]
         
-        test_output = np.array([])
-        for test in test_input:
+        test_output = np.array([],[('x','f4'),('y','f4'),('i','i4')])
+        for i, test in enumerate(test_input):
             pred = self.model.predict(np.array([test]))
-            test_output = pred if test_output.size == 0 else np.append(test_output, pred, 0)
+            #pred = np.append(pred, i).reshape(1,3)
+            new_el = np.array((pred.item(0),pred.item(1),i),dtype=[('x','f4'),('y','f4'),('i','i4')])
+            test_output = np.append(test_output, new_el)
+            #test_output = pred if test_output.size == 0 else np.append(test_output, pred, 0)
         
-        self.df_max = [test_output[:,0].max(),test_output[:,1].max()]
-        self.df_min = [test_output[:,0].min(),test_output[:,1].min()]
+        self.df_max = [test_output['x'].max(), test_output['y'].max()]
+        self.df_min = [test_output['x'].min(), test_output['y'].min()]
         
         self.df_mean = [
-            test_output[:,0].mean(),
-            test_output[:,1].mean(),
+            test_output['x'].mean(),
+            test_output['y'].mean(),
             ]
         
     def getModel(self):
@@ -644,12 +662,11 @@ class SmartGirl(ghost):
         '''
         df_norm = (df - df.mean()) / (df.max() - df.min())
         '''
-        prediction = self.model.predict([data + [self.old_vector_x] + [self.old_vector_y]])
-        x = prediction.item(0)
-        y = prediction.item(1)
+        x,y = self.model.predict([data + [self.old_vector_x] + [self.old_vector_y]]).squeeze()
         
         # Normalisation
         df_x = (x - self.df_mean[0]) / (self.df_max[0] - self.df_min[0])
         df_y = (y - self.df_mean[1]) / (self.df_max[1] - self.df_min[1])
-        return [round(df_x, 3), round(df_y, 3)]
+        return [df_x, df_y]
+        #return [round(df_x, 3), round(df_y, 3)]
         #return [x, y]
