@@ -10,6 +10,8 @@ import numpy as np
 import math
 import tensorflow as tf
 from math import floor
+from numpy import ndarray
+from array import array
 mnist = tf.keras.datasets.mnist
 
 class ghost(pygame.sprite.Sprite,object):
@@ -20,7 +22,7 @@ class ghost(pygame.sprite.Sprite,object):
         self.rect = pygame.Rect(x,y,w,h)
         self.surf_rect = surface.get_rect()
         self.R = random.randrange(0,255)
-        self.G = random.randrange(0,255)
+        self.G = random.randrange(100,255)
         self.B = random.randrange(0,255)
         self.symbol = 'Y'
         
@@ -398,6 +400,34 @@ class Mononoke(ghost):
         df_y = (y - self.df_mean[1]) / (self.df_max.item(1) - self.df_min.item(1))
         return [round(df_x, 3), round(df_y,3)]
     
+    
+class VectorMemory():
+    def __init__(self, memory_depth):
+        self._memory_depth = memory_depth
+        self._data = [(0, 0) for i in range(memory_depth + 1)]
+        
+    @property
+    def depth(self):
+        return self._memory_depth
+    
+    @property
+    def memory(self) -> ndarray:
+        return np.array(self._data, [('vx','f4'),('vy','f4')])
+    
+    def flatten(self) -> array:
+        return np.array([list(e) for e in self.memory.tolist()]).flatten().tolist()
+        
+    def recall(self, age) -> ndarray:
+        return np.array(self._data[age], [('vx','f4'),('vy','f4')])
+    
+    def keepIt(self, vector):
+        self._data.insert(0, vector if type(vector) is tuple else tuple(vector))
+        self.refresh()
+    
+    def refresh(self):
+        self._data = [vector for i, vector in enumerate(self._data) if i <= self._memory_depth]
+        
+
 class SmartGirl(ghost):
     '''
     @param model: TensorFlow model
@@ -409,21 +439,27 @@ class SmartGirl(ghost):
     @param validate_output_data: validation output data set    
     '''
     
-    train_epochs = 5 #TensorFlow model train epochs param
+    train_epochs = 10 #TensorFlow model train epochs param
     
     def __init__(self,surface,observer,x=0,y=0,w=15,h=15):
         super(SmartGirl,self).__init__(surface,observer,x,y,w,h)
+        
+        self.age = 0
+        self.life_span = 50
+        
+        self.vector_memory = VectorMemory(1)
         
         self.old_vector_x = 0
         self.old_vector_y = 0
         
         self.model = tf.keras.models.Sequential([
-            tf.keras.layers.Dense(4),
+            tf.keras.layers.Dense(6),
             #tf.keras.layers.LayerNormalization(),
             #tf.keras.layers.LayerNormalization(axis=1 , center=True , scale=True),
             #tf.keras.layers.Dense(8),
             #tf.keras.layers.Dense(64, activation='relu'),
             #tf.keras.layers.Dense(64),
+            #tf.keras.layers.Dense(120, activation='softmax'),
             tf.keras.layers.Dense(120),
             #tf.keras.layers.Dropout(0.2),
             #tf.keras.layers.Dense(64),
@@ -447,7 +483,7 @@ class SmartGirl(ghost):
         self.data_sets = {
             'train_input': {
                 'bounce': [[0,0,0,0],[0,1,1,1],[1,0,1,-1],[1,1,-1,1]],
-                'random': np.random.random((1000, 4)),
+                'random': np.random.random((1000, 6)),
                 'bs': [[0.25,0.25],[0.25,0.5],[0.5,0.5],[0.5,0.25],[0,0],[0,1],[1,0],[1,1]],
                 'empty': [[0,0]],
                 },
@@ -459,7 +495,7 @@ class SmartGirl(ghost):
                 },
             'validate_input': {
                 'bounce': [[0.1,0,0,0],[0.1,1,0.1,1],[1,0.1,0.1,-1],[1,1,-1,-1]],
-                'random': np.random.random((1000, 4)),
+                'random': np.random.random((1000, 6)),
                 'bs': [[0.25,0.25],[0.25,0.5],[0.5,0.5],[0.5,0.25],[0,0],[0,1],[1,0],[1,1]],
                 'empty': [[0,0]],
                 },
@@ -505,7 +541,15 @@ class SmartGirl(ghost):
         #self.model.fit(data, labels, epochs=10, validation_data=(val_data, val_labels))
         #self.model.fit(data, labels, epochs=10)
         #self.model.fit(data, labels, epochs=10)
+    
+    def growOlder(self):
+        self.age += 1
+        
+        if self.age > self.life_span:
+            self.respawn()
+        
     def respawn(self):
+        self.age = 0
         offset = 5
         self.rect.y = random.randrange(offset, self.grid['height'] - offset)
         self.rect.x = random.randrange(offset, self.grid['width'] - offset)
@@ -535,6 +579,8 @@ class SmartGirl(ghost):
         #dx = 0 if abs(dy) > abs(dx) else dx
         #dy = 0 if abs(dy) > abs(dx)
         
+        self.growOlder()
+        
         if 0 < self.rect.y + dy < self.grid['height']:
             self.rect.y += dy
         else:
@@ -554,6 +600,8 @@ class SmartGirl(ghost):
             #self.rect.x = random.randrange(5,self.grid['width'] - 5)
             
         #self.obs.set_tile(self.rect.x,self.rect.y,'color',(self.R,self.G,self.B))
+        
+        self.vector_memory.keepIt((dx, dy))
         self.changeTile()
         
     def changeTile(self):
@@ -619,6 +667,7 @@ class SmartGirl(ghost):
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
         
         ds_type = 'random'
+        #ds_type = 'bounce'
         
         self.model.fit(
             self.data_sets['train_input'][ds_type],
@@ -637,7 +686,7 @@ class SmartGirl(ghost):
         #v_step = 1
         #vector_samples = np.arange(-1, 1 + v_step, v_step)
         vector_samples = [1,-1]
-        vector = [[x] + [y] for y in vector_samples for x in vector_samples]
+        vector = [[x] + [y] + [y] + [x] for y in vector_samples for x in vector_samples]
         
         test_input = [d + v for v in vector for d in xy]
         
@@ -664,7 +713,7 @@ class SmartGirl(ghost):
         '''
         df_norm = (df - df.mean()) / (df.max() - df.min())
         '''
-        x,y = self.model.predict([data + [self.old_vector_x] + [self.old_vector_y]]).squeeze()
+        x,y = self.model.predict([data + self.vector_memory.flatten()]).squeeze()
         
         # Normalisation
         df_x = (x - self.df_mean[0]) / (self.df_max[0] - self.df_min[0])
