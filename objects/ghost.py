@@ -439,7 +439,7 @@ class SmartGirl(ghost):
     @param validate_output_data: validation output data set    
     '''
     
-    train_epochs = 10 #TensorFlow model train epochs param
+    train_epochs = 20 #TensorFlow model train epochs param
     
     def __init__(self,surface,observer,x=0,y=0,w=15,h=15):
         super(SmartGirl,self).__init__(surface,observer,x,y,w,h)
@@ -460,11 +460,11 @@ class SmartGirl(ghost):
             #tf.keras.layers.Dense(64, activation='relu'),
             #tf.keras.layers.Dense(64),
             #tf.keras.layers.Dense(120, activation='softmax'),
-            tf.keras.layers.Dense(120),
+            #tf.keras.layers.Dense(120),
             #tf.keras.layers.Dropout(0.2),
             #tf.keras.layers.Dense(64),
             tf.keras.layers.Dense(64),
-            tf.keras.layers.Dense(8),
+            tf.keras.layers.Dense(8, activation='softmax'),
             tf.keras.layers.Dense(64),
             #tf.keras.layers.Dense(3),
             #tf.keras.layers.LayerNormalization(),
@@ -482,27 +482,30 @@ class SmartGirl(ghost):
         
         self.data_sets = {
             'train_input': {
-                'bounce': [[0,0,0,0],[0,1,1,1],[1,0,1,-1],[1,1,-1,1]],
+                'bounce': [[0,0,0,0,0,0],[0,1,1,1,0,0],[1,0,1,-1,1,1],[1,1,1,-1,1,-1]],
                 'random': np.random.random((1000, 6)),
                 'bs': [[0.25,0.25],[0.25,0.5],[0.5,0.5],[0.5,0.25],[0,0],[0,1],[1,0],[1,1]],
                 'empty': [[0,0]],
                 },
             'train_output': {
-                'bounce': [[1,1],[1,-1],[-1,1],[-1,-1]],
+                #'bounce': [[1,1],[1,-1],[-1,1],[-1,-1]],
+                'bounce': [[1,-1],[-1,1],[1,-1],[-1,1]],
                 'random': np.random.random((1000, 2)),
-                'bs': [[1,0],[0,1],[-1,0],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]],
+                #'bs': [[1,0],[0,1],[-1,0],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]],
+                'bs': [[1,-1],[-1,1],[1,-1],[-1,1],[1,-1],[-1,1],[1,-1],[-1,1]],
                 'empty': [[0,0]],
                 },
             'validate_input': {
-                'bounce': [[0.1,0,0,0],[0.1,1,0.1,1],[1,0.1,0.1,-1],[1,1,-1,-1]],
+                'bounce': [[0.1,0,0,0,0,0],[0.1,1,0.1,1,0.1,0],[1,0.1,0.1,-1,0.1,1],[1,1,-1,-1,0.1,-1]],
                 'random': np.random.random((1000, 6)),
                 'bs': [[0.25,0.25],[0.25,0.5],[0.5,0.5],[0.5,0.25],[0,0],[0,1],[1,0],[1,1]],
                 'empty': [[0,0]],
                 },
             'validate_output': {
-                'bounce': [[0.1,1],[0.1,-1],[-1,0.1],[-1,-1]],
+                #'bounce': [[0.1,1],[0.1,-1],[-1,0.1],[-1,-1]],
+                'bounce': [[1,-1],[-1,1],[1,-1],[-1,1]],
                 'random': np.random.random((1000, 2)),
-                'bs': [[1,0],[0,1],[-1,0],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]],
+                'bs': [[1,-1],[-1,1],[1,-1],[-1,1],[1,-1],[-1,1],[1,-1],[-1,1]],
                 'empty': [[0,0]],
                 }
             }
@@ -558,9 +561,9 @@ class SmartGirl(ghost):
         x = self.rect.x / self.grid['width']
         y = self.rect.y / self.grid['height']
         #dx, dy = np.floor(np.multiply(self.predict([x, y]),10))
-        #dx, dy = np.multiply(self.predict([x, y]),100)
+        dx, dy = np.multiply(self.predict([x, y]),10)
         #dx, dy = np.floor(self.predict([x, y]))
-        xx, yy = self.predict([x, y])
+        #xx, yy = self.predict([x, y])
         #dx, dy = self.predict([x, y])
         
         #if abs(xx) > abs(yy):
@@ -568,8 +571,8 @@ class SmartGirl(ghost):
         #elif abs(yy) > abs(xx):
         #    yy = 0
         
-        dx = 1 if xx > 0 else -1 if xx < 0 else 0
-        dy = 1 if yy > 0 else -1 if yy < 0 else 0
+        #dx = 1 if xx > 0 else -1 if xx < 0 else 0
+        #dy = 1 if yy > 0 else -1 if yy < 0 else 0
         
         #if abs(dy) > abs(dx):
         #    dx = 0
@@ -622,8 +625,8 @@ class SmartGirl(ghost):
             val = round(np.random.uniform(),3)
             #delta = 1 if val < 0.2 else -1 if val > 0.8 else round(np.random.uniform(),3)
             #delta = 100 if val < 0.2 else -100 if val > 0.8 else random.randrange(-1,1)
-            delta = 100 if val < 0.2 else -100 if val > 0.8 else math.log(val) * 100
-            #delta = 1 if val < 0.2 else -1 if val > 0.8 else -100
+            #delta = 100 if val < 0.2 else -100 if val > 0.8 else math.log(val) * 100
+            delta = 1 if val < 0.2 else -1 if val > 0.8 else -100
             #delta = 0
             
             data_set.insert(i, {
@@ -666,8 +669,8 @@ class SmartGirl(ghost):
         logdir="logs/fit/" + datetime.now().strftime("%Y%m%d-%H%M%S")
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
         
-        ds_type = 'random'
-        #ds_type = 'bounce'
+        #ds_type = 'random'
+        ds_type = 'bounce'
         
         self.model.fit(
             self.data_sets['train_input'][ds_type],
