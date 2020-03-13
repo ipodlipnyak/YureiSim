@@ -40,7 +40,7 @@ class App:
             #ginie = ghost.yurei(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
             #ginie = ghost.rojinbi(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
             #ginie = ghost.Mononoke(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
-            ginie = ghost.SmartGirl(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
+            ginie = ghost.Mononoke(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
             self.lamp.add(ginie)
             gc += 1
             
@@ -61,7 +61,7 @@ class App:
             elif event.key == pygame.K_LEFT:
                 gx = random.randrange(0,self.weigth/self.ts)
                 gy = random.randrange(0,self.height/self.ts)
-                self.lamp.add(ghost.SmartGirl(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts))
+                self.lamp.add(ghost.Mononoke(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts))
 
     def on_loop(self):
         self.clock.tick()
