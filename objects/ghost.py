@@ -185,6 +185,66 @@ class VectorMemory():
     def refresh(self):
         self._data = [vector for i, vector in enumerate(self._data) if i <= self._memory_depth]
         
+class Sensei():
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.memory = VectorMemory(1)
+        
+        self.moving_straight = False
+        
+        self.border = {
+                'up': 0,
+                'down': 0,
+                'right': 0,
+                'left': 0
+            }
+    
+    def checkIfBorderReached(self):
+        '''
+        0    0.1    0.2    ...    1    X
+        0.1
+        0.2
+        ...
+        1
+        
+        Y
+        '''
+        offset = 0.1
+        self.border['left'] = self.x <= 0 + offset
+        self.border['right'] = self.x >= 1 - offset
+        
+        self.border['up'] = self.y <= 0 + offset
+        self.border['down'] = self.y >= 1 - offset
+    
+    def checkIfMovingStraight(self):
+        self.moving_straight = (self.memory.recall(0) == self.memory.recall(1)).all()
+    
+    def move(self):
+        self.checkIfMovingStraight()
+        self.checkIfBorderReached()
+        
+        step = 0.1
+        
+        dx = round(np.random.uniform(-1, 1),3)
+        dy = round(np.random.uniform(-1, 1),3)
+        
+        if self.moving_straight:
+            dx *= -1
+            dy *= -1
+            
+        dy = step if self.border['up'] else -1 * step if self.border['down'] else dy
+        dx = step if self.border['left'] else -1 * step if self.border['right'] else dx
+        
+        self.x += dx
+        self.y += dy
+            
+        return {
+            'input': [[self.x, self.y] + self.memory.flatten()],
+            'output': [dx, dy]
+            }
+        
+        
 
 class Mononoke(ghost):
     '''
@@ -264,7 +324,7 @@ class Mononoke(ghost):
                 'bounce': [[0,0,0,0,0,0],[0,1,1,1,0,0],[1,0,1,-1,1,1],[1,1,1,-1,1,-1]],
                 'random': np.random.random((1000, 6)),
                 'bs': [[0.25,0.25],[0.25,0.5],[0.5,0.5],[0.5,0.25],[0,0],[0,1],[1,0],[1,1]],
-                'empty': [[0,0]],
+                'empty': [[0,0,0,0,0,0]],
                 },
             'train_output': {
                 #'bounce': [[1,1],[1,-1],[-1,1],[-1,-1]],
@@ -278,7 +338,7 @@ class Mononoke(ghost):
                 'bounce': [[0.1,0,0,0,0,0],[0.1,1,0.1,1,0.1,0],[1,0.1,0.1,-1,0.1,1],[1,1,-1,-1,0.1,-1]],
                 'random': np.random.random((1000, 6)),
                 'bs': [[0.25,0.25],[0.25,0.5],[0.5,0.5],[0.5,0.25],[0,0],[0,1],[1,0],[1,1]],
-                'empty': [[0,0]],
+                'empty': [[0,0,0,0,0,0]],
                 },
             'validate_output': {
                 #'bounce': [[0.1,1],[0.1,-1],[-1,0.1],[-1,-1]],
@@ -343,6 +403,7 @@ class Mononoke(ghost):
     def on_move(self):
         self.x = self.rect.x / self.grid['width']
         self.y = self.rect.y / self.grid['height']
+        
         #dx, dy = np.floor(np.multiply(self.predict([x, y]),10))
         #dx, dy = np.multiply(self.predict(),10)
         #dx, dy = np.floor(self.predict([x, y]))
@@ -473,7 +534,8 @@ class Mononoke(ghost):
             callbacks=[tensorboard_callback])
 
         # move controller training
-        ds_type = 'bounce'
+        #ds_type = 'bounce'
+        ds_type = 'empty'
         self.model.fit(
             self.data_sets['train_input'][ds_type],
             self.data_sets['train_output'][ds_type], 
