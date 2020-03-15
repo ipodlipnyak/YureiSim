@@ -278,7 +278,10 @@ class Mononoke(ghost):
         self.old_vector_y = 0
         self.painter = tf.keras.models.Sequential([
             tf.keras.layers.Dense(6),
-            tf.keras.layers.Dense(64),
+            tf.keras.layers.Dense(8),
+            tf.keras.layers.Dense(8),
+            tf.keras.layers.Dense(8),
+            tf.keras.layers.Dense(8),
             tf.keras.layers.Dense(3)
             ])
         
@@ -556,7 +559,7 @@ class Mononoke(ghost):
         self.painter.fit(
             self.data_sets_color['train_input'][ds_type_painer],
             self.data_sets_color['train_output'][ds_type_painer], 
-            epochs=1,
+            epochs=3,
             validation_data=(
                 self.data_sets_color['validate_input'][ds_type_painer],
                 self.data_sets_color['validate_output'][ds_type_painer], 
