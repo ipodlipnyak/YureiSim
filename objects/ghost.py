@@ -229,21 +229,27 @@ class Sensei():
         dx = round(np.random.uniform(-1, 1),3)
         dy = round(np.random.uniform(-1, 1),3)
         
+        #dx = dy = 1
+        
         if self.moving_straight:
-            dx *= -1
-            dy *= -1
+            #dx, dy = np.multiply(self.memory.recall(0), -1)
+            dx *= self.memory.recall(0)['vx'] * -1
+            #dy *= self.memory.recall(0)['vy'] * -1
+            dy =  -1 * step if self.memory.recall(0)['vy'] == 0 else 0
             
         dy = step if self.border['up'] else -1 * step if self.border['down'] else dy
         dx = step if self.border['left'] else -1 * step if self.border['right'] else dx
         
         self.x += dx
         self.y += dy
-            
-        return {
-            'input': [[self.x, self.y] + self.memory.flatten()],
-            'output': [dx, dy]
-            }
         
+        input_dataset = [[self.x, self.y] + self.memory.flatten()]
+        self.memory.keepIt([dx, dy])
+            
+        return [input_dataset, [dx, dy]]
+    
+    def makeNMoves(self, n):
+        return np.array([self.move() for i in range(n)])
         
 
 class Mononoke(ghost):
@@ -288,7 +294,8 @@ class Mononoke(ghost):
             #tf.keras.layers.Dropout(0.2),
             #tf.keras.layers.Dense(64),
             tf.keras.layers.Dense(64),
-            tf.keras.layers.Dense(8, activation='softmax'),
+            #tf.keras.layers.Dense(8, activation='softmax'),
+            tf.keras.layers.Dense(8),
             tf.keras.layers.Dense(64),
             #tf.keras.layers.Dense(3),
             #tf.keras.layers.LayerNormalization(),
@@ -349,7 +356,8 @@ class Mononoke(ghost):
                 }
             }
         
-        self.trainDSGen()
+        #self.trainDSGen()
+        self.trainDSGenSensei()
         
         #self.train_input_data = [[0,0],[0,1],[1,0],[1,1]]
         #self.train_output_data = [[1,1],[1,-1],[-1,1],[-1,-1]]
@@ -405,15 +413,15 @@ class Mononoke(ghost):
         self.y = self.rect.y / self.grid['height']
         
         #dx, dy = np.floor(np.multiply(self.predict([x, y]),10))
-        #dx, dy = np.multiply(self.predict(),10)
+        #dx, dy = np.multiply(self.predict(), 3)
         #dx, dy = np.floor(self.predict([x, y]))
         xx, yy = self.predict()
         #dx, dy = self.predict()
         
-        #if abs(xx) > abs(yy):
-        #    xx = 0
-        #elif abs(yy) > abs(xx):
-        #    yy = 0
+        if abs(xx) > abs(yy):
+            xx = 0
+        elif abs(yy) > abs(xx):
+            yy = 0
         
         dx = 1 if xx > 0 else -1 if xx < 0 else 0
         dy = 1 if yy > 0 else -1 if yy < 0 else 0
@@ -467,6 +475,18 @@ class Mononoke(ghost):
             self.obs.set_tile(self.rect.x,self.rect.y,'symbol','G')
         else:
             self.obs.set_tile(self.rect.x,self.rect.y,'symbol','O')
+    
+    def trainDSGenSensei(self):
+        sensei = Sensei()
+        
+        train_data_set = sensei.makeNMoves(100)
+        validate_data_set = sensei.makeNMoves(100)
+        
+        self.data_sets['train_input']['sensei'] = train_data_set[:,0].tolist()
+        self.data_sets['train_output']['sensei'] = train_data_set[:,1].tolist()
+        
+        self.data_sets['validate_input']['sensei'] = validate_data_set[:,0].tolist()
+        self.data_sets['validate_output']['sensei'] = validate_data_set[:,1].tolist()
     
     def trainDSGen(self):
         i = 0
@@ -526,16 +546,17 @@ class Mononoke(ghost):
         self.painter.fit(
             self.data_sets_color['train_input'][ds_type_painer],
             self.data_sets_color['train_output'][ds_type_painer], 
-            epochs=self.train_epochs,
+            epochs=1,
             validation_data=(
                 self.data_sets_color['validate_input'][ds_type_painer],
                 self.data_sets_color['validate_output'][ds_type_painer], 
                 ),
-            callbacks=[tensorboard_callback])
+            )
 
         # move controller training
         #ds_type = 'bounce'
-        ds_type = 'empty'
+        #ds_type = 'empty'
+        ds_type = 'sensei'
         self.model.fit(
             self.data_sets['train_input'][ds_type],
             self.data_sets['train_output'][ds_type], 
