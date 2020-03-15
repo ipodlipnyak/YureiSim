@@ -465,7 +465,17 @@ class Mononoke(ghost):
         @TODO set ghost color
         ''' 
         r,g,b = self.predictColor()
+        self.R, self.G, self.B = [0,0,0]
+        
+        all_channels = np.array([['R',r],['G',g],['B',b]])
+        max_channel_index = all_channels.argmax(0)[1]
+        setattr(self, all_channels[max_channel_index][0], 255)
 
+        #self.R, self.G, self.B = np.absolute(np.multiply(np.array(self.predictColor()), 255))
+        #if self.R < 100 and self.G < 100 and self.B < 100:
+        #    self.R += 100
+        #    self.G += 100
+        #    self.B += 100
         
         self.obs.set_tile(self.rect.x,self.rect.y,'color',(self.R,self.G,self.B))
         
