@@ -30,6 +30,12 @@ class ghost(pygame.sprite.Sprite,object):
             'height': self.surf_rect.h/self.rect.h,
             'width': self.surf_rect.w/self.rect.w
             }
+        
+    def respawn(self, x = False, y = False):
+        offset = 5
+        self.rect.y = random.randrange(offset, self.grid['height'] - offset) if y == False else y
+        self.rect.x = random.randrange(offset, self.grid['width'] - offset) if x == False else x
+        
     def update(self):
         self.on_move()
     def on_move(self):
@@ -263,14 +269,14 @@ class Mononoke(ghost):
     @param validate_output_data: validation output data set    
     '''
     
-    train_epochs = 3 #TensorFlow model train epochs param
+    train_epochs = 50 #TensorFlow model train epochs param
     
     
     def __init__(self,surface,observer,x=0,y=0,w=15,h=15):
         super(Mononoke,self).__init__(surface,observer,x,y,w,h)
         
         self.age = 0
-        self.life_span = 50
+        self.life_span = 1000
         
         self.vector_memory = VectorMemory(1)
         
@@ -401,12 +407,10 @@ class Mononoke(ghost):
         
         if self.age > self.life_span:
             self.respawn()
-        
-    def respawn(self):
+     
+    def respawn(self, x=False, y=False):
+        ghost.respawn(self, x=x, y=y)
         self.age = 0
-        offset = 5
-        self.rect.y = random.randrange(offset, self.grid['height'] - offset)
-        self.rect.x = random.randrange(offset, self.grid['width'] - offset)
 
     def on_move(self):
         self.x = self.rect.x / self.grid['width']
