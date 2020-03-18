@@ -10,7 +10,7 @@ class App:
     def __init__(self):
         self._running = True
         self._display_surf = None
-        self.size = self.weigth, self.height = 1200,750#600, 375 #1024, 368
+        self.size = self.width, self.height = 1200,750#600, 375 #1024, 368
         self.ts = 15 #tile size
         self.nerad = 0,0 #neighborhood radius
         self.net = 3 #neighborhood type from 1 to 6
@@ -33,7 +33,7 @@ class App:
         self.lamp = pygame.sprite.Group()
         gc = 1
         while gc <= self.gc:
-            gx = random.randrange(0,self.weigth/self.ts)
+            gx = random.randrange(0,self.width/self.ts)
             gy = random.randrange(0,self.height/self.ts)
             #ginie = ghost.bakemono(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
             #ginie = ghost.virus(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts)
@@ -56,12 +56,36 @@ class App:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 self._running = False
-            if event.key == pygame.K_RIGHT:
+            if event.key == pygame.K_RIGHT or event.key == pygame.K_q:
                 self.lamp.empty()
             elif event.key == pygame.K_LEFT:
-                gx = random.randrange(0,self.weigth/self.ts)
+                gx = random.randrange(0,self.width/self.ts)
                 gy = random.randrange(0,self.height/self.ts)
                 self.lamp.add(ghost.Mononoke(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts))
+                
+            elif event.key == pygame.K_w:
+                for x in range(int(self.width/self.ts)):
+                    for y in range(int(self.height/self.ts)):
+                        #setattr(Depo.gridSingleton.g[x][y],'color',(0,0,0))
+                        self.herr.set_tile(x, y, 'color', (0,0,0))
+                
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == pygame.BUTTON_LEFT:
+                x,y = pygame.mouse.get_pos()
+                gx = x/self.ts
+                gy = y/self.ts
+                self.lamp.add(ghost.Mononoke(self.surf, self.herr,x=gx,y=gy,w=self.ts,h=self.ts))
+            
+            if event.button == pygame.BUTTON_RIGHT:
+                x,y = pygame.mouse.get_pos()
+                gx = x/self.ts
+                gy = y/self.ts
+                for ghost_sprite in self.lamp.sprites():
+                    ghost_sprite.respawn(gx, gy)
+            
+            if event.button == pygame.BUTTON_MIDDLE:
+                pass
+            
 
     def on_loop(self):
         self.clock.tick()
