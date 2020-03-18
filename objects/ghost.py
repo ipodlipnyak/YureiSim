@@ -276,7 +276,7 @@ class Mononoke(ghost):
         super(Mononoke,self).__init__(surface,observer,x,y,w,h)
         
         self.age = 0
-        self.life_span = 1000
+        self.life_span = 100
         
         self.vector_memory = VectorMemory(1)
         
