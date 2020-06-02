@@ -269,7 +269,7 @@ class Mononoke(ghost):
     @param validate_output_data: validation output data set    
     '''
     
-    train_epochs = 50 #TensorFlow model train epochs param
+    train_epochs = 5 #TensorFlow model train epochs param
     
     
     def __init__(self,surface,observer,x=0,y=0,w=15,h=15):
@@ -384,9 +384,12 @@ class Mononoke(ghost):
         #    loss='sparse_categorical_crossentropy',
         #    metrics=['accuracy'])
         
-        self.model.compile(optimizer=tf.keras.optimizers.Adam(0.01),
-              loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
-              metrics=['accuracy'])
+        self.model.compile(
+            optimizer=tf.keras.optimizers.Adam(0.01),
+            #optimizer=tf.keras.optimizers.Adadelta(),
+            loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
+            metrics=['accuracy']
+        )
         
         self.painter.compile(optimizer=tf.keras.optimizers.Adam(0.01),
               loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
